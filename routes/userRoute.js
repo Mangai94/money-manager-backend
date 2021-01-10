@@ -1,26 +1,41 @@
 const express = require("express");
 const router = express.Router();
 
-const token = "abcd";
-router.get("/isAuthorized", async (req, res) => {
-  console.log(req.headers.authorization);
-  if (req.headers.authorization && req.headers.authorization == token)
-    return res.status(200).send(true);
-  return res.status(400).send(false);
+const users = [];
+
+router.get("/details", async (req, res) => {
+  if (!req.headers.authorization) return res.status(400).send();
+
+  const user = users.find((u) => u.emailId === req.headers.authorization);
+
+  if (!user) return res.status(400).send();
+
+  return res.status(200).send({
+    userName: user.userName,
+    emailId: user.emailId,
+  });
 });
 
 router.post("/", async (req, res) => {
-  res.status(201).send(token);
+  const user = req.body;
+  if (!user || !user.userName || !user.emailId || !user.password)
+    return res.status(400).send(false);
+
+  users.push(user);
+  res.status(201).send(user.emailId);
 });
 
 router.post("/login", async (req, res) => {
   var data = req.body;
   if (!data) return res.status(500).send("Request data is empty");
 
-  if (data.userName == "Mangai" && data.password == "kanna")
-    return res.status(200).send(token);
+  const user = users.find(
+    (u) => u.userName === data.userName && u.password === data.password
+  );
 
-  res.status(400).send("Invalid user");
+  if (!user) return res.status(400).send("Invalid user");
+
+  return res.status(200).send(user.emailId);
 });
 
 module.exports = router;
